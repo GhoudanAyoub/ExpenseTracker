@@ -1,4 +1,4 @@
-package ghoudan.pricetracker.ui.theme
+package ghoudan.ExpenseTracker.ui.theme
 
 import androidx.compose.ui.graphics.Color
 

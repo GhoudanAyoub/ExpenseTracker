@@ -1,4 +1,4 @@
-package ghoudan.pricetracker
+package ghoudan.ExpenseTracker
 
 import org.junit.Test
 
