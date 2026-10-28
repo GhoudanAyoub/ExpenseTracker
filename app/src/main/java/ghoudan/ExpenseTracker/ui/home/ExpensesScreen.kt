@@ -1,4 +1,4 @@
-package ghoudan.pricetracker.ui.home
+package ghoudan.ExpenseTracker.ui.home
 
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
