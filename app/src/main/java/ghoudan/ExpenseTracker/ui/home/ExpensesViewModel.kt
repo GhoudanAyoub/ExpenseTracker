@@ -2,6 +2,7 @@ package ghoudan.ExpenseTracker.ui.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.lifecycle.HiltViewModel
 import ghoudan.ExpenseTracker.data.ExpensesRepository
 import ghoudan.ExpenseTracker.model.ExpensesCategory
 import ghoudan.ExpenseTracker.model.ExpensesModels
@@ -11,6 +12,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 sealed class ExpensesUiState {
     data object Loading : ExpensesUiState()
@@ -18,7 +20,8 @@ sealed class ExpensesUiState {
     data object Empty : ExpensesUiState()
 }
 
-class ExpensesViewModel(
+@HiltViewModel
+class ExpensesViewModel @Inject constructor(
     private val expensesRepository: ExpensesRepository,
 ) : ViewModel() {
 

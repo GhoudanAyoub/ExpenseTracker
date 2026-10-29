@@ -30,8 +30,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -40,11 +40,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import ghoudan.ExpenseTracker.model.ExpensesCategory
 import ghoudan.ExpenseTracker.model.ExpensesModels
-import ghoudan.ExpenseTracker.ui.home.ExpensesUiState
-import ghoudan.ExpenseTracker.ui.home.ExpensesViewModel
 import java.math.BigDecimal
 import java.text.NumberFormat
 import java.util.UUID
@@ -53,28 +52,20 @@ import java.util.UUID
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ExpensesModelsScreen(
-    expensesViewModel: ExpensesViewModel,
     modifier: Modifier = Modifier,
+    expensesViewModel: ExpensesViewModel = hiltViewModel(),
 ) {
     val uiState by expensesViewModel.uiState.collectAsStateWithLifecycle()
-    val ExpensesModels = remember { mutableStateListOf<ExpensesModels>() }
-
     var showDialog by rememberSaveable { mutableStateOf(false) }
 
-    when (uiState) {
-        ExpensesUiState.Loading -> {}
-        ExpensesUiState.Empty -> {
-            Text(
-                "No Expenses yet. Tap + to add one.",
-                style = MaterialTheme.typography.bodyLarge
-            )
-        }
+    val expenses by remember { derivedStateOf { (uiState as? ExpensesUiState.Success)?.expenses.orEmpty() } }
+    val total by remember { derivedStateOf { expenses.sumOf { it.amount } } }
 
-        is ExpensesUiState.Success -> {
-            ExpensesModels.clear()
-            ExpensesModels.addAll((uiState as ExpensesUiState.Success).expenses)
-        }
-    }
+    // Stable lambdas — ViewModel reference never changes
+    val onFilterAll = remember { { expensesViewModel.filterExpensesByCategory(ExpensesCategory.All) } }
+    val onFilterFood = remember { { expensesViewModel.filterExpensesByCategory(ExpensesCategory.Food) } }
+    val onFilterTransport = remember { { expensesViewModel.filterExpensesByCategory(ExpensesCategory.Transport) } }
+    val onFilterBills = remember { { expensesViewModel.filterExpensesByCategory(ExpensesCategory.Bills) } }
     Scaffold(
         modifier = modifier,
         topBar = { TopAppBar(title = { Text("Expenses") }) },
@@ -84,7 +75,7 @@ fun ExpensesModelsScreen(
             }
         }
     ) { padding ->
-        if (ExpensesModels.isEmpty()) {
+        if (expenses.isEmpty()) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -104,30 +95,19 @@ fun ExpensesModelsScreen(
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                //add filter button that opens a dialog to filter expenses by category
                 item {
                     LazyRow {
-                        item {
-                            FilterButton(ExpensesCategory.All,onFilter = {
-                                expensesViewModel.filterExpensesByCategory(ExpensesCategory.All)
-                            })
-                            FilterButton(ExpensesCategory.Food,onFilter = {
-                                expensesViewModel.filterExpensesByCategory(ExpensesCategory.Food)
-                            })
-                            FilterButton(ExpensesCategory.Transport,onFilter = {
-                                expensesViewModel.filterExpensesByCategory(ExpensesCategory.Transport)
-                            })
-                            FilterButton(ExpensesCategory.Bills,onFilter = {
-                                expensesViewModel.filterExpensesByCategory(ExpensesCategory.Bills)
-                            })
-                        }
+                        item { FilterButton(ExpensesCategory.All, onFilter = onFilterAll) }
+                        item { FilterButton(ExpensesCategory.Food, onFilter = onFilterFood) }
+                        item { FilterButton(ExpensesCategory.Transport, onFilter = onFilterTransport) }
+                        item { FilterButton(ExpensesCategory.Bills, onFilter = onFilterBills) }
                     }
                 }
                 item {
-                    TotalCard(total = ExpensesModels.sumOf { it.amount })
+                    TotalCard(total = total)
                 }
-                items(ExpensesModels, key = { it.id }) { ExpensesModels ->
-                    ExpensesModelsItem(ExpensesModels)
+                items(expenses, key = { it.id }) { expense ->
+                    ExpensesModelsItem(expense)
                 }
             }
         }
